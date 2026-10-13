@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Atenuador: oscurece la pantalla por debajo del brillo mínimo.
+  Permisos (la lista completa; no hay ningún otro):
+  - SYSTEM_ALERT_WINDOW: dibujar la capa oscura sobre las demás apps (lo apruebas tú en Ajustes).
+  - FOREGROUND_SERVICE y FOREGROUND_SERVICE_SPECIAL_USE: mantener la capa activa mientras usas otras apps.
+  - POST_NOTIFICATIONS: mostrar el aviso "Atenuador activo" con el botón para apagarlo.
+  No pide INTERNET, así que Android no le permite conectarse a nada.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="cl.cmitjans.atenuador">
+
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <application
+        android:label="Atenuador"
+        android:icon="@mipmap/ic_launcher"
+        android:allowBackup="false"
+        android:theme="@android:style/Theme.DeviceDefault.NoActionBar">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTask">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <service
+            android:name=".DimService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Capa oscura sobre la pantalla para bajar el brillo por debajo del mínimo" />
+        </service>
+
+        <service
+            android:name=".DimTileService"
+            android:exported="true"
+            android:icon="@drawable/ic_tile"
+            android:label="Atenuador"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+    </application>
+</manifest>
