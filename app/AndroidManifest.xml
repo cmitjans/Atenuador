@@ -6,6 +6,10 @@
   - FOREGROUND_SERVICE y FOREGROUND_SERVICE_SPECIAL_USE: mantener la capa activa mientras usas otras apps.
   - POST_NOTIFICATIONS: mostrar el aviso "Atenuador activo" con el botón para apagarlo.
   No pide INTERNET, así que Android no le permite conectarse a nada.
+
+  Modo opcional "cubrir barras del sistema": un servicio de accesibilidad que tú activas en
+  Ajustes → Accesibilidad. No es un permiso que la app pida; está configurado para no leer la
+  pantalla ni recibir eventos (ver res/xml/accessibility_config.xml).
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="cl.cmitjans.atenuador">
@@ -49,6 +53,19 @@
             <intent-filter>
                 <action android:name="android.service.quicksettings.action.QS_TILE" />
             </intent-filter>
+        </service>
+
+        <service
+            android:name=".DimAccessibilityService"
+            android:exported="true"
+            android:label="@string/a11y_label"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/accessibility_config" />
         </service>
     </application>
 </manifest>

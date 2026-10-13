@@ -9,8 +9,10 @@ final class Prefs {
     static final String KEY_LEVEL = "level";
     static final String KEY_ON = "on";
 
-    /** Android no deja que una capa que deja pasar los toques tape más del 80 %. */
+    /** Android no deja que una capa normal que deja pasar los toques tape más del 80 %. */
     static final int MAX_LEVEL = 80;
+    /** Con el modo de accesibilidad activo ese límite no aplica; se deja un margen para seguir viendo. */
+    static final int MAX_LEVEL_A11Y = 95;
     static final int DEFAULT_LEVEL = 50;
 
     private Prefs() {}
@@ -19,13 +21,17 @@ final class Prefs {
         return c.getSharedPreferences(NAME, Context.MODE_PRIVATE);
     }
 
+    static int maxLevel() {
+        return DimAccessibilityService.isActive() ? MAX_LEVEL_A11Y : MAX_LEVEL;
+    }
+
     static int level(Context c) {
         int v = get(c).getInt(KEY_LEVEL, DEFAULT_LEVEL);
-        return Math.max(0, Math.min(MAX_LEVEL, v));
+        return Math.max(0, Math.min(maxLevel(), v));
     }
 
     static void setLevel(Context c, int level) {
-        get(c).edit().putInt(KEY_LEVEL, Math.max(0, Math.min(MAX_LEVEL, level))).apply();
+        get(c).edit().putInt(KEY_LEVEL, Math.max(0, Math.min(maxLevel(), level))).apply();
     }
 
     static boolean isOn(Context c) {

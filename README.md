@@ -28,6 +28,12 @@ Esta es la lista completa (ver `app/AndroidManifest.xml`):
 
 **No tiene permiso de internet**: Android no le deja conectarse a nada.
 
+### Modo opcional: cubrir barras del sistema
+
+Android no deja que una app normal dibuje sobre la barra de hora y batería ni sobre el panel de notificaciones. Si activas **Atenuador** en Ajustes → Accesibilidad, la capa cubre también esas partes y la intensidad máxima sube a 95 %.
+
+El servicio está configurado (`app/res/xml/accessibility_config.xml`) para **no recibir eventos, no leer el contenido de la pantalla y no hacer gestos**: solo dibuja la capa. Como la app no viene de Google Play, Android puede marcarlo como "ajuste restringido"; se desbloquea en la información de la app → menú ⋮ → **Permitir ajustes restringidos**.
+
 ## Cómo funciona
 
 Una capa negra semitransparente cubre la pantalla. La capa no recibe toques, así que todo lo que tocas llega a la app de abajo. El código está en `app/src`.

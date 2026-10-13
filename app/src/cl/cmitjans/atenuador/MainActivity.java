@@ -37,6 +37,8 @@ public class MainActivity extends Activity {
     private SeekBar slider;
     private TextView levelLabel;
     private LinearLayout permCard;
+    private TextView a11yStatus;
+    private Button a11yBtn;
     private boolean updating;
 
     @Override
@@ -85,7 +87,7 @@ public class MainActivity extends Activity {
         levelLabel.setPadding(0, dp(18), 0, dp(4));
         main.addView(levelLabel);
         slider = new SeekBar(this);
-        slider.setMax(Prefs.MAX_LEVEL);
+        slider.setMax(Prefs.maxLevel());
         slider.setProgress(Prefs.level(this));
         slider.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override public void onProgressChanged(SeekBar s, int p, boolean user) {
@@ -97,7 +99,8 @@ public class MainActivity extends Activity {
         });
         main.addView(slider);
         TextView hint = text("Puedes ajustarla con la app encendida y ver el efecto al instante. "
-                + "El máximo es 80 %, el límite que permite Android para que siempre puedas ver y tocar la pantalla.", 13, MUTED);
+                + "El máximo es 80 %, el límite que pone Android para que siempre puedas ver y tocar la pantalla; "
+                + "con el modo \"cubrir barras del sistema\" llega a 95 %.", 13, MUTED);
         hint.setPadding(0, dp(10), 0, 0);
         main.addView(hint);
         root.addView(main, marginBottom(dp(16)));
@@ -115,6 +118,30 @@ public class MainActivity extends Activity {
             quick.addView(add, marginTop(dp(14)));
         }
         root.addView(quick, marginBottom(dp(16)));
+
+        // Modo accesibilidad: cubrir barra de estado y panel
+        LinearLayout bars = card();
+        bars.addView(text("Cubrir barras del sistema", 18, TEXT));
+        TextView bt = text("Android no deja que una app normal oscurezca la barra de hora y batería ni el panel que bajas "
+                + "desde arriba. Si activas Atenuador en Accesibilidad, la capa cubre también esas partes. "
+                + "Está configurado para no leer la pantalla, no recibir eventos de otras apps y no tocar por ti: "
+                + "solo dibuja la capa.", 14, MUTED);
+        bt.setPadding(0, dp(6), 0, dp(8));
+        bars.addView(bt);
+        a11yStatus = text("", 15, TEXT);
+        bars.addView(a11yStatus);
+        a11yBtn = button("Abrir ajustes de Accesibilidad");
+        a11yBtn.setOnClickListener(v -> startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)));
+        bars.addView(a11yBtn, marginTop(dp(14)));
+        TextView restricted = text("Si Atenuador aparece bloqueado (\"Ajuste restringido\"): abre la información de la app, "
+                + "toca el menú ⋮ de arriba a la derecha y elige \"Permitir ajustes restringidos\". Luego vuelve a Accesibilidad.", 13, MUTED);
+        restricted.setPadding(0, dp(12), 0, 0);
+        bars.addView(restricted);
+        Button info = button("Abrir información de la app");
+        info.setOnClickListener(v -> startActivity(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                Uri.parse("package:" + getPackageName()))));
+        bars.addView(info, marginTop(dp(10)));
+        root.addView(bars, marginBottom(dp(16)));
 
         TextView xiaomi = text("Si se apaga solo después de un rato: en Ajustes → Apps → Atenuador → Ahorro de batería, "
                 + "elige \"Sin restricciones\".", 13, MUTED);
@@ -140,7 +167,12 @@ public class MainActivity extends Activity {
         toggle.setEnabled(allowed);
         toggle.setChecked(allowed && Prefs.isOn(this));
         updating = false;
+        slider.setMax(Prefs.maxLevel());
         slider.setProgress(Prefs.level(this));
+        boolean a11y = DimAccessibilityService.isActive();
+        a11yStatus.setText(a11y ? "✓ Activo: la capa cubre toda la pantalla" : "Desactivado");
+        a11yStatus.setTextColor(a11y ? ACCENT : MUTED);
+        a11yBtn.setText(a11y ? "Desactivar en Accesibilidad" : "Abrir ajustes de Accesibilidad");
         showLevel(Prefs.level(this));
     }
 

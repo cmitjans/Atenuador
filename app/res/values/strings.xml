@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="a11y_label">Atenuador: cubrir barras del sistema</string>
+    <string name="a11y_summary">Oscurece también la barra de hora y batería y el panel de notificaciones</string>
+    <string name="a11y_description">Permite que la capa oscura de Atenuador cubra también la barra de hora y batería y el panel que bajas desde arriba. Atenuador no lee el contenido de la pantalla, no recibe eventos de otras apps, no puede tocar por ti y no tiene acceso a internet: solo dibuja la capa.</string>
+</resources>

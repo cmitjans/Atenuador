@@ -33,6 +33,9 @@ public class DimService extends Service {
     private static final int NOTIF_ID = 1;
     private static final int STEP = 10;
 
+    /** Servicio en marcha, para que el modo accesibilidad pueda pedirle que quite o ponga su capa. */
+    private static DimService running;
+
     private WindowManager wm;
     private View overlay;
     private WindowManager.LayoutParams lp;
@@ -59,6 +62,7 @@ public class DimService extends Service {
     public void onCreate() {
         super.onCreate();
         wm = (WindowManager) getSystemService(WINDOW_SERVICE);
+        running = this;
         createChannel();
         startInForeground();
         Prefs.get(this).registerOnSharedPreferenceChangeListener(listener);
@@ -81,9 +85,26 @@ public class DimService extends Service {
             return START_NOT_STICKY;
         }
         Prefs.setOn(this, true);
-        addOverlay();
+        syncOverlay();
         updateTile();
         return START_STICKY;
+    }
+
+    /** Llamado cuando el modo accesibilidad se enciende o se apaga. */
+    static void onAccessibilityChanged() {
+        if (running != null) running.syncOverlay();
+    }
+
+    /** Si el modo accesibilidad está activo, la capa la dibuja él (cubre más); si no, esta. */
+    private void syncOverlay() {
+        if (DimAccessibilityService.isActive()) removeOverlay(); else addOverlay();
+        showNotification();
+    }
+
+    private void removeOverlay() {
+        if (overlay == null) return;
+        try { wm.removeView(overlay); } catch (RuntimeException ignored) { }
+        overlay = null;
     }
 
     private void addOverlay() {
@@ -107,7 +128,7 @@ public class DimService extends Service {
                     : WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
         }
         if (Build.VERSION.SDK_INT >= 30) lp.setFitInsetsTypes(0);
-        lp.alpha = Prefs.level(this) / 100f;
+        lp.alpha = Math.min(Prefs.level(this), Prefs.MAX_LEVEL) / 100f;
         try {
             wm.addView(overlay, lp);
         } catch (RuntimeException e) {
@@ -119,7 +140,7 @@ public class DimService extends Service {
 
     private void applyLevel() {
         if (overlay == null || lp == null) return;
-        lp.alpha = Prefs.level(this) / 100f;
+        lp.alpha = Math.min(Prefs.level(this), Prefs.MAX_LEVEL) / 100f;
         try { wm.updateViewLayout(overlay, lp); } catch (RuntimeException ignored) { }
     }
 
@@ -180,10 +201,8 @@ public class DimService extends Service {
     @Override
     public void onDestroy() {
         Prefs.get(this).unregisterOnSharedPreferenceChangeListener(listener);
-        if (overlay != null) {
-            try { wm.removeView(overlay); } catch (RuntimeException ignored) { }
-            overlay = null;
-        }
+        removeOverlay();
+        if (running == this) running = null;
         updateTile();
         super.onDestroy();
     }
