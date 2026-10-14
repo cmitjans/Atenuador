@@ -5,9 +5,11 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.ServiceInfo;
 import android.graphics.Color;
@@ -29,7 +31,10 @@ public class DimService extends Service {
     static final String ACTION_DARKER = "cl.cmitjans.atenuador.DARKER";
     static final String ACTION_LIGHTER = "cl.cmitjans.atenuador.LIGHTER";
 
-    private static final String CHANNEL = "atenuador";
+    /** Canal con importancia normal (pero silencioso), para que el ícono se vea en la barra de estado.
+     *  El canal anterior ("atenuador") era de importancia baja y HyperOS lo escondía entre las silenciosas. */
+    private static final String CHANNEL = "atenuador_visible";
+    private static final String OLD_CHANNEL = "atenuador";
     private static final int NOTIF_ID = 1;
     private static final int STEP = 10;
 
@@ -39,6 +44,16 @@ public class DimService extends Service {
     private WindowManager wm;
     private View overlay;
     private WindowManager.LayoutParams lp;
+
+    /** Si el usuario lo eligió, se apaga al bloquear el teléfono para no olvidarlo encendido. */
+    private final BroadcastReceiver screenOff = new BroadcastReceiver() {
+        @Override public void onReceive(Context c, Intent i) {
+            if (Prefs.offOnLock(c)) {
+                Prefs.setOn(c, false);
+                stopSelf();
+            }
+        }
+    };
 
     private final SharedPreferences.OnSharedPreferenceChangeListener listener = (p, key) -> {
         if (Prefs.KEY_LEVEL.equals(key)) {
@@ -66,6 +81,7 @@ public class DimService extends Service {
         createChannel();
         startInForeground();
         Prefs.get(this).registerOnSharedPreferenceChangeListener(listener);
+        registerReceiver(screenOff, new IntentFilter(Intent.ACTION_SCREEN_OFF));
     }
 
     @Override
@@ -146,11 +162,15 @@ public class DimService extends Service {
 
     private void createChannel() {
         if (Build.VERSION.SDK_INT < 26) return;
+        NotificationManager nm = getSystemService(NotificationManager.class);
+        nm.deleteNotificationChannel(OLD_CHANNEL);
         NotificationChannel ch = new NotificationChannel(CHANNEL, "Atenuador activo",
-                NotificationManager.IMPORTANCE_LOW);
-        ch.setDescription("Aviso mientras la pantalla está atenuada, con botones para ajustarla");
+                NotificationManager.IMPORTANCE_DEFAULT);
+        ch.setDescription("Ícono en la barra de estado mientras la pantalla está atenuada, con botones para ajustarla");
+        ch.setSound(null, null);
+        ch.enableVibration(false);
         ch.setShowBadge(false);
-        getSystemService(NotificationManager.class).createNotificationChannel(ch);
+        nm.createNotificationChannel(ch);
     }
 
     private Notification buildNotification() {
@@ -172,6 +192,7 @@ public class DimService extends Service {
                 .setContentText("Toca para ajustar")
                 .setContentIntent(open)
                 .setOngoing(true)
+                .setOnlyAlertOnce(true)
                 .setShowWhen(false)
                 .addAction(new Notification.Action.Builder(null, "Más claro", lighter).build())
                 .addAction(new Notification.Action.Builder(null, "Más oscuro", darker).build())
@@ -201,6 +222,7 @@ public class DimService extends Service {
     @Override
     public void onDestroy() {
         Prefs.get(this).unregisterOnSharedPreferenceChangeListener(listener);
+        try { unregisterReceiver(screenOff); } catch (RuntimeException ignored) { }
         removeOverlay();
         if (running == this) running = null;
         updateTile();

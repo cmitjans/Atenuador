@@ -2,6 +2,7 @@ package cl.cmitjans.atenuador;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.NotificationManager;
 import android.app.StatusBarManager;
 import android.content.ComponentName;
 import android.content.Intent;
@@ -37,6 +38,8 @@ public class MainActivity extends Activity {
     private SeekBar slider;
     private TextView levelLabel;
     private LinearLayout permCard;
+    private LinearLayout notifCard;
+    private Switch lockToggle;
     private TextView a11yStatus;
     private Button a11yBtn;
     private boolean updating;
@@ -68,6 +71,16 @@ public class MainActivity extends Activity {
                 Uri.parse("package:" + getPackageName()))));
         permCard.addView(permBtn, marginTop(dp(14)));
         root.addView(permCard, marginBottom(dp(16)));
+
+        // Aviso si las notificaciones están bloqueadas: sin ellas no hay ícono que recuerde que está encendido
+        notifCard = card();
+        notifCard.addView(text("Las notificaciones de Atenuador están desactivadas, así que no verás el ícono "
+                + "que avisa que la pantalla está atenuada, ni los botones para apagarlo rápido.", 15, TEXT));
+        Button notifBtn = button("Activar notificaciones");
+        notifBtn.setOnClickListener(v -> startActivity(new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                .putExtra(Settings.EXTRA_APP_PACKAGE, getPackageName())));
+        notifCard.addView(notifBtn, marginTop(dp(14)));
+        root.addView(notifCard, marginBottom(dp(16)));
 
         // Encendido e intensidad
         LinearLayout main = card();
@@ -103,6 +116,19 @@ public class MainActivity extends Activity {
                 + "con el modo \"cubrir barras del sistema\" llega a 95 %.", 13, MUTED);
         hint.setPadding(0, dp(10), 0, 0);
         main.addView(hint);
+
+        LinearLayout lockRow = new LinearLayout(this);
+        lockRow.setGravity(Gravity.CENTER_VERTICAL);
+        lockRow.setPadding(0, dp(18), 0, 0);
+        TextView lockLabel = text("Apagar al bloquear el teléfono", 16, TEXT);
+        lockRow.addView(lockLabel, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
+        lockToggle = new Switch(this);
+        lockToggle.setOnCheckedChangeListener((b, checked) -> { if (!updating) Prefs.setOffOnLock(this, checked); });
+        lockRow.addView(lockToggle);
+        main.addView(lockRow);
+        TextView lockHint = text("Así no queda encendido sin que te des cuenta. Al desbloquear, la pantalla vuelve a su brillo normal.", 13, MUTED);
+        lockHint.setPadding(0, dp(4), 0, 0);
+        main.addView(lockHint);
         root.addView(main, marginBottom(dp(16)));
 
         // Acceso rápido
@@ -163,7 +189,10 @@ public class MainActivity extends Activity {
     private void refresh() {
         boolean allowed = Settings.canDrawOverlays(this);
         permCard.setVisibility(allowed ? View.GONE : View.VISIBLE);
+        boolean notifOk = getSystemService(NotificationManager.class).areNotificationsEnabled();
+        notifCard.setVisibility(allowed && !notifOk ? View.VISIBLE : View.GONE);
         updating = true;
+        lockToggle.setChecked(Prefs.offOnLock(this));
         toggle.setEnabled(allowed);
         toggle.setChecked(allowed && Prefs.isOn(this));
         updating = false;

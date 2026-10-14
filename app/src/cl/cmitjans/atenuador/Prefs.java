@@ -8,6 +8,7 @@ final class Prefs {
     static final String NAME = "atenuador";
     static final String KEY_LEVEL = "level";
     static final String KEY_ON = "on";
+    static final String KEY_OFF_ON_LOCK = "off_on_lock";
 
     /** Android no deja que una capa normal que deja pasar los toques tape más del 80 %. */
     static final int MAX_LEVEL = 80;
@@ -36,6 +37,14 @@ final class Prefs {
 
     static boolean isOn(Context c) {
         return get(c).getBoolean(KEY_ON, false);
+    }
+
+    static boolean offOnLock(Context c) {
+        return get(c).getBoolean(KEY_OFF_ON_LOCK, false);
+    }
+
+    static void setOffOnLock(Context c, boolean v) {
+        get(c).edit().putBoolean(KEY_OFF_ON_LOCK, v).apply();
     }
 
     static void setOn(Context c, boolean on) {
