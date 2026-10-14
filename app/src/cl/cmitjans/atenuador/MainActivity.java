@@ -135,7 +135,7 @@ public class MainActivity extends Activity {
         LinearLayout quick = card();
         quick.addView(text("Acceso rápido", 18, TEXT));
         TextView qt = text("Agrega el botón Atenuador al panel que bajas desde arriba para encenderlo con un toque. "
-                + "Mientras está activo, la notificación tiene botones para aclarar, oscurecer o apagar.", 14, MUTED);
+                + "Mientras está activo, verás un aviso en ese mismo panel: al expandirlo aparecen botones para aclarar, oscurecer o apagar.", 14, MUTED);
         qt.setPadding(0, dp(6), 0, 0);
         quick.addView(qt);
         if (Build.VERSION.SDK_INT >= 33) {

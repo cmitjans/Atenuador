@@ -30,11 +30,11 @@ public class DimService extends Service {
     static final String ACTION_STOP = "cl.cmitjans.atenuador.STOP";
     static final String ACTION_DARKER = "cl.cmitjans.atenuador.DARKER";
     static final String ACTION_LIGHTER = "cl.cmitjans.atenuador.LIGHTER";
+    static final String ACTION_RESHOW = "cl.cmitjans.atenuador.RESHOW";
 
-    /** Canal con importancia normal (pero silencioso), para que el ícono se vea en la barra de estado.
-     *  El canal anterior ("atenuador") era de importancia baja y HyperOS lo escondía entre las silenciosas. */
-    private static final String CHANNEL = "atenuador_visible";
-    private static final String OLD_CHANNEL = "atenuador";
+    /** Notificación discreta: sin ícono en la barra de estado, plegada en el panel; al expandirla aparecen los controles. */
+    private static final String CHANNEL = "atenuador_panel";
+    private static final String[] OLD_CHANNELS = {"atenuador", "atenuador_visible"};
     private static final int NOTIF_ID = 1;
     private static final int STEP = 10;
 
@@ -91,6 +91,10 @@ public class DimService extends Service {
             Prefs.setOn(this, false);
             stopSelf();
             return START_NOT_STICKY;
+        }
+        if (ACTION_RESHOW.equals(action)) {
+            if (Prefs.isOn(this)) showNotification();
+            return START_STICKY;
         }
         if (ACTION_DARKER.equals(action)) Prefs.setLevel(this, Prefs.level(this) + STEP);
         if (ACTION_LIGHTER.equals(action)) Prefs.setLevel(this, Prefs.level(this) - STEP);
@@ -163,10 +167,10 @@ public class DimService extends Service {
     private void createChannel() {
         if (Build.VERSION.SDK_INT < 26) return;
         NotificationManager nm = getSystemService(NotificationManager.class);
-        nm.deleteNotificationChannel(OLD_CHANNEL);
+        for (String old : OLD_CHANNELS) nm.deleteNotificationChannel(old);
         NotificationChannel ch = new NotificationChannel(CHANNEL, "Atenuador activo",
-                NotificationManager.IMPORTANCE_DEFAULT);
-        ch.setDescription("Ícono en la barra de estado mientras la pantalla está atenuada, con botones para ajustarla");
+                NotificationManager.IMPORTANCE_LOW);
+        ch.setDescription("Aviso en el panel mientras la pantalla está atenuada; al expandirlo aparecen los controles");
         ch.setSound(null, null);
         ch.enableVibration(false);
         ch.setShowBadge(false);
@@ -175,8 +179,9 @@ public class DimService extends Service {
 
     private Notification buildNotification() {
         int flags = PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE;
-        PendingIntent open = PendingIntent.getActivity(this, 0,
-                new Intent(this, MainActivity.class), flags);
+        // Desde Android 14 se puede descartar deslizando; si pasa, se vuelve a mostrar para no perder el aviso
+        PendingIntent reshow = PendingIntent.getService(this, 4,
+                new Intent(this, DimService.class).setAction(ACTION_RESHOW), flags);
         PendingIntent stop = PendingIntent.getService(this, 1,
                 new Intent(this, DimService.class).setAction(ACTION_STOP), flags);
         PendingIntent darker = PendingIntent.getService(this, 2,
@@ -188,9 +193,9 @@ public class DimService extends Service {
                 ? new Notification.Builder(this, CHANNEL)
                 : new Notification.Builder(this);
         return b.setSmallIcon(R.drawable.ic_tile)
-                .setContentTitle("Pantalla atenuada al " + Prefs.level(this) + " %")
-                .setContentText("Toca para ajustar")
-                .setContentIntent(open)
+                .setContentTitle("Atenuador encendido · " + Prefs.level(this) + " %")
+                .setContentText("Expande para ajustar o apagar")
+                .setDeleteIntent(reshow)
                 .setOngoing(true)
                 .setOnlyAlertOnce(true)
                 .setShowWhen(false)
