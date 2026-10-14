@@ -33,8 +33,8 @@ public class DimService extends Service {
     static final String ACTION_RESHOW = "cl.cmitjans.atenuador.RESHOW";
 
     /** Notificación discreta: sin ícono en la barra de estado, plegada en el panel; al expandirla aparecen los controles. */
-    private static final String CHANNEL = "atenuador_panel";
-    private static final String[] OLD_CHANNELS = {"atenuador", "atenuador_visible"};
+    private static final String CHANNEL = "atenuador_minimo";
+    private static final String[] OLD_CHANNELS = {"atenuador", "atenuador_visible", "atenuador_panel"};
     private static final int NOTIF_ID = 1;
     private static final int STEP = 10;
 
@@ -59,6 +59,7 @@ public class DimService extends Service {
         if (Prefs.KEY_LEVEL.equals(key)) {
             applyLevel();
             showNotification();
+            updateTile();
         }
     };
 
@@ -169,7 +170,7 @@ public class DimService extends Service {
         NotificationManager nm = getSystemService(NotificationManager.class);
         for (String old : OLD_CHANNELS) nm.deleteNotificationChannel(old);
         NotificationChannel ch = new NotificationChannel(CHANNEL, "Atenuador activo",
-                NotificationManager.IMPORTANCE_LOW);
+                NotificationManager.IMPORTANCE_MIN);
         ch.setDescription("Aviso en el panel mientras la pantalla está atenuada; al expandirlo aparecen los controles");
         ch.setSound(null, null);
         ch.enableVibration(false);
