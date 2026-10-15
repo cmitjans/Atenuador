@@ -74,8 +74,8 @@ public class MainActivity extends Activity {
 
         // Aviso si las notificaciones están bloqueadas: sin ellas no hay ícono que recuerde que está encendido
         notifCard = card();
-        notifCard.addView(text("Las notificaciones de Atenuador están desactivadas, así que no verás el ícono "
-                + "que avisa que la pantalla está atenuada, ni los botones para apagarlo rápido.", 15, TEXT));
+        notifCard.addView(text("Las notificaciones de Atenuador están desactivadas. Si es a propósito, está bien: "
+                + "el botón de ajustes rápidos muestra si está encendido. Agrégalo para no olvidarlo activado.", 15, TEXT));
         Button notifBtn = button("Activar notificaciones");
         notifBtn.setOnClickListener(v -> startActivity(new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
                 .putExtra(Settings.EXTRA_APP_PACKAGE, getPackageName())));
@@ -134,8 +134,10 @@ public class MainActivity extends Activity {
         // Acceso rápido
         LinearLayout quick = card();
         quick.addView(text("Acceso rápido", 18, TEXT));
-        TextView qt = text("Agrega el botón Atenuador al panel que bajas desde arriba para encenderlo con un toque. "
-                + "Mientras está activo, verás un aviso en ese mismo panel: al expandirlo aparecen botones para aclarar, oscurecer o apagar.", 14, MUTED);
+        TextView qt = text("Agrega el botón Atenuador al panel que bajas desde arriba. Al tocarlo aparece un cuadro "
+                + "para encenderlo, apagarlo y ajustar la intensidad sin abrir la app; manteniéndolo presionado se abre la app. "
+                + "Si prefieres no ver la notificación, puedes desactivarla en los ajustes de Android: el botón muestra si está "
+                + "encendido y con qué intensidad.", 14, MUTED);
         qt.setPadding(0, dp(6), 0, 0);
         quick.addView(qt);
         if (Build.VERSION.SDK_INT >= 33) {
