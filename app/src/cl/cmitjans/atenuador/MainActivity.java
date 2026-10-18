@@ -201,10 +201,31 @@ public class MainActivity extends Activity {
         slider.setMax(Prefs.maxLevel());
         slider.setProgress(Prefs.level(this));
         boolean a11y = DimAccessibilityService.isActive();
-        a11yStatus.setText(a11y ? "✓ Activo: la capa cubre toda la pantalla" : "Desactivado");
-        a11yStatus.setTextColor(a11y ? ACCENT : MUTED);
+        boolean enSettings = a11yEnabledInSettings();
+        if (a11y) {
+            a11yStatus.setText("✓ Activo: la capa cubre toda la pantalla");
+            a11yStatus.setTextColor(ACCENT);
+        } else if (enSettings) {
+            // Android lo dejó marcado como activo pero no lo volvió a conectar (pasa en Xiaomi cuando el
+            // sistema cierra la app, por ejemplo al cambiar un permiso como las notificaciones)
+            a11yStatus.setText("⚠ Activado en Ajustes, pero Android lo desconectó. Desactívalo y vuelve a activarlo en Accesibilidad.");
+            a11yStatus.setTextColor(Color.rgb(240, 180, 90));
+        } else {
+            a11yStatus.setText("Desactivado");
+            a11yStatus.setTextColor(MUTED);
+        }
         a11yBtn.setText(a11y ? "Desactivar en Accesibilidad" : "Abrir ajustes de Accesibilidad");
         showLevel(Prefs.level(this));
+    }
+
+    /** ¿Está Atenuador marcado como activo en Ajustes → Accesibilidad? (aunque no esté conectado) */
+    private boolean a11yEnabledInSettings() {
+        String list = Settings.Secure.getString(getContentResolver(), Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
+        if (list == null) return false;
+        String mine = new ComponentName(this, DimAccessibilityService.class).flattenToString();
+        String mineShort = new ComponentName(this, DimAccessibilityService.class).flattenToShortString();
+        for (String s : list.split(":")) if (s.equalsIgnoreCase(mine) || s.equalsIgnoreCase(mineShort)) return true;
+        return false;
     }
 
     private void turnOn() {
