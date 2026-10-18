@@ -113,7 +113,13 @@ public class DimTileService extends TileService {
         box.addView(more, lp);
 
         d.setContentView(box);
-        if (d.getWindow() != null) d.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        if (d.getWindow() != null) {
+            d.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+            // Sin el oscurecimiento que Android pone detrás de los cuadros: así lo que ves alrededor
+            // tiene exactamente la intensidad que estás eligiendo
+            d.getWindow().clearFlags(android.view.WindowManager.LayoutParams.FLAG_DIM_BEHIND);
+            d.getWindow().setDimAmount(0f);
+        }
         d.setOnDismissListener(x -> refresh());
         return d;
     }
