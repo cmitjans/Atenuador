@@ -33,7 +33,16 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-            <!-- Mantener presionado el botón de ajustes rápidos abre la app -->
+        </activity>
+
+        <!-- Mantener presionado el botón de ajustes rápidos abre este panel pequeño de intensidad -->
+        <activity
+            android:name=".PanelIntensidad"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:launchMode="singleInstance"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
             <intent-filter>
                 <action android:name="android.service.quicksettings.action.QS_TILE_PREFERENCES" />
             </intent-filter>

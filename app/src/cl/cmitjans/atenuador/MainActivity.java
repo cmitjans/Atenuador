@@ -134,8 +134,8 @@ public class MainActivity extends Activity {
         // Acceso rápido
         LinearLayout quick = card();
         quick.addView(text("Acceso rápido", 18, TEXT));
-        TextView qt = text("Agrega el botón Atenuador al panel que bajas desde arriba. Al tocarlo aparece un cuadro "
-                + "para encenderlo, apagarlo y ajustar la intensidad sin abrir la app; manteniéndolo presionado se abre la app. "
+        TextView qt = text("Agrega el botón Atenuador al panel que bajas desde arriba. Un toque lo enciende o apaga con la última "
+                + "intensidad; manteniéndolo presionado aparece un panel pequeño para ajustarla sobre lo que estás viendo. "
                 + "Si prefieres no ver la notificación, puedes desactivarla en los ajustes de Android: el botón muestra si está "
                 + "encendido y con qué intensidad.", 14, MUTED);
         qt.setPadding(0, dp(6), 0, 0);
