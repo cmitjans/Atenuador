@@ -40,7 +40,7 @@ public class PanelIntensidad extends Activity {
         getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
 
-        if (!Settings.canDrawOverlays(this)) {
+        if (!Settings.canDrawOverlays(this) && !Sistema.enUso(this)) {
             // Sin el permiso no hay nada que ajustar: llevar a la app, que explica cómo darlo
             startActivity(new Intent(this, MainActivity.class));
             finish();
@@ -117,7 +117,7 @@ public class PanelIntensidad extends Activity {
         if (sw == null) return;
         updating = true;
         sw.setChecked(Prefs.isOn(this));
-        slider.setMax(Prefs.maxLevel());
+        slider.setMax(Prefs.maxLevel(this));
         slider.setProgress(Prefs.level(this));
         level.setText("Intensidad: " + Prefs.level(this) + " %");
         updating = false;

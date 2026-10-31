@@ -5,6 +5,8 @@
   - SYSTEM_ALERT_WINDOW: dibujar la capa oscura sobre las demás apps (lo apruebas tú en Ajustes).
   - FOREGROUND_SERVICE y FOREGROUND_SERVICE_SPECIAL_USE: mantener la capa activa mientras usas otras apps.
   - POST_NOTIFICATIONS: mostrar el aviso "Atenuador activo" con el botón para apagarlo.
+  - WRITE_SECURE_SETTINGS (opcional): encender la "atenuación extra" de Android en el modo sistema.
+    Ninguna app puede pedirlo en pantalla; solo se obtiene con un comando desde un computador.
   No pide INTERNET, así que Android no le permite conectarse a nada.
 
   Modo opcional "cubrir barras del sistema": un servicio de accesibilidad que tú activas en
@@ -18,6 +20,8 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Solo para el "modo sistema" opcional; no se puede pedir en pantalla, se da desde un computador (ver Sistema.java) -->
+    <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" />
 
     <application
         android:label="Atenuador"

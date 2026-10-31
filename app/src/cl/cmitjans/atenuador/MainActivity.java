@@ -4,6 +4,8 @@ import android.Manifest;
 import android.app.Activity;
 import android.app.NotificationManager;
 import android.app.StatusBarManager;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -25,6 +27,7 @@ import android.widget.ScrollView;
 import android.widget.SeekBar;
 import android.widget.Switch;
 import android.widget.TextView;
+import android.widget.Toast;
 
 /** Pantalla principal: encender, elegir intensidad y dar el permiso necesario. */
 public class MainActivity extends Activity {
@@ -40,6 +43,9 @@ public class MainActivity extends Activity {
     private LinearLayout permCard;
     private LinearLayout notifCard;
     private Switch lockToggle;
+    private Switch sysToggle;
+    private TextView sysStatus;
+    private LinearLayout sysSetup;
     private TextView a11yStatus;
     private Button a11yBtn;
     private boolean updating;
@@ -100,7 +106,7 @@ public class MainActivity extends Activity {
         levelLabel.setPadding(0, dp(18), 0, dp(4));
         main.addView(levelLabel);
         slider = new SeekBar(this);
-        slider.setMax(Prefs.maxLevel());
+        slider.setMax(Prefs.maxLevel(this));
         slider.setProgress(Prefs.level(this));
         slider.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override public void onProgressChanged(SeekBar s, int p, boolean user) {
@@ -171,6 +177,54 @@ public class MainActivity extends Activity {
         bars.addView(info, marginTop(dp(10)));
         root.addView(bars, marginBottom(dp(16)));
 
+        // Modo sistema (avanzado): la atenuación extra de Android, sin capa
+        LinearLayout sys = card();
+        sys.addView(text("Modo sistema (avanzado)", 18, TEXT));
+        TextView st = text("Usa la \"atenuación extra\" que trae Android en vez de una capa encima. El sistema oscurece la "
+                + "imagen por su cuenta: cubre también la barra de la hora y el panel, no parpadea al abrir apps ni al girar, "
+                + "y no necesita el modo de accesibilidad.", 14, MUTED);
+        st.setPadding(0, dp(6), 0, dp(8));
+        sys.addView(st);
+        sysStatus = text("", 15, TEXT);
+        sys.addView(sysStatus);
+
+        LinearLayout sysRow = new LinearLayout(this);
+        sysRow.setGravity(Gravity.CENTER_VERTICAL);
+        sysRow.setPadding(0, dp(12), 0, 0);
+        sysRow.addView(text("Usar modo sistema", 16, TEXT), new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
+        sysToggle = new Switch(this);
+        sysToggle.setOnCheckedChangeListener((b, on) -> {
+            if (updating) return;
+            Prefs.setSystemMode(this, on);
+            refresh();
+        });
+        sysRow.addView(sysToggle);
+        sys.addView(sysRow);
+
+        sysSetup = new LinearLayout(this);
+        sysSetup.setOrientation(LinearLayout.VERTICAL);
+        sysSetup.addView(text("Android solo deja cambiar este ajuste a apps con un permiso especial que se da una vez desde un "
+                + "computador (no se puede pedir en pantalla). Ese permiso solo permite cambiar ajustes del sistema: "
+                + "no da acceso a tus archivos, mensajes ni internet.", 14, MUTED));
+        TextView cmd = text(Sistema.COMANDO, 13, TEXT);
+        cmd.setTypeface(Typeface.MONOSPACE);
+        cmd.setTextIsSelectable(true);
+        cmd.setPadding(dp(12), dp(10), dp(12), dp(10));
+        GradientDrawable cbg = new GradientDrawable();
+        cbg.setColor(BG);
+        cbg.setCornerRadius(dp(10));
+        cmd.setBackground(cbg);
+        sysSetup.addView(cmd, marginTop(dp(12)));
+        Button copy = button("Copiar comando");
+        copy.setOnClickListener(v -> {
+            getSystemService(ClipboardManager.class).setPrimaryClip(ClipData.newPlainText("comando", Sistema.COMANDO));
+            Toast.makeText(this, "Comando copiado", Toast.LENGTH_SHORT).show();
+        });
+        sysSetup.addView(copy, marginTop(dp(10)));
+        sysSetup.setPadding(0, dp(12), 0, 0);
+        sys.addView(sysSetup);
+        root.addView(sys, marginBottom(dp(16)));
+
         TextView xiaomi = text("Si se apaga solo después de un rato: en Ajustes → Apps → Atenuador → Ahorro de batería, "
                 + "elige \"Sin restricciones\".", 13, MUTED);
         root.addView(xiaomi);
@@ -189,16 +243,24 @@ public class MainActivity extends Activity {
     }
 
     private void refresh() {
-        boolean allowed = Settings.canDrawOverlays(this);
+        boolean allowed = Settings.canDrawOverlays(this) || Sistema.enUso(this);
         permCard.setVisibility(allowed ? View.GONE : View.VISIBLE);
         boolean notifOk = getSystemService(NotificationManager.class).areNotificationsEnabled();
         notifCard.setVisibility(allowed && !notifOk ? View.VISIBLE : View.GONE);
         updating = true;
         lockToggle.setChecked(Prefs.offOnLock(this));
+        boolean sysOk = Sistema.permitido(this);
+        sysToggle.setEnabled(sysOk);
+        sysToggle.setChecked(sysOk && Prefs.systemMode(this));
+        sysSetup.setVisibility(sysOk ? View.GONE : View.VISIBLE);
+        sysStatus.setText(!sysOk ? "Falta el permiso (ver abajo)"
+                : Prefs.systemMode(this) ? "✓ En uso. Si al encender el atenuador no cambia nada, tu teléfono no trae esta función: desactiva este modo."
+                : "Permiso dado. Activa el interruptor para usarlo.");
+        sysStatus.setTextColor(sysOk ? ACCENT : MUTED);
         toggle.setEnabled(allowed);
         toggle.setChecked(allowed && Prefs.isOn(this));
         updating = false;
-        slider.setMax(Prefs.maxLevel());
+        slider.setMax(Prefs.maxLevel(this));
         slider.setProgress(Prefs.level(this));
         boolean a11y = DimAccessibilityService.isActive();
         boolean enSettings = a11yEnabledInSettings();
@@ -229,7 +291,7 @@ public class MainActivity extends Activity {
     }
 
     private void turnOn() {
-        if (!Settings.canDrawOverlays(this)) { refresh(); return; }
+        if (!Settings.canDrawOverlays(this) && !Sistema.enUso(this)) { refresh(); return; }
         if (Build.VERSION.SDK_INT >= 33
                 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
             requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 1);

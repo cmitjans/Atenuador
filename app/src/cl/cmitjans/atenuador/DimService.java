@@ -56,6 +56,10 @@ public class DimService extends Service {
     };
 
     private final SharedPreferences.OnSharedPreferenceChangeListener listener = (p, key) -> {
+        if (Prefs.KEY_SYSTEM.equals(key)) {
+            syncOverlay();
+            updateTile();
+        }
         if (Prefs.KEY_LEVEL.equals(key)) {
             applyLevel();
             showNotification();
@@ -100,7 +104,7 @@ public class DimService extends Service {
         if (ACTION_DARKER.equals(action)) Prefs.setLevel(this, Prefs.level(this) + STEP);
         if (ACTION_LIGHTER.equals(action)) Prefs.setLevel(this, Prefs.level(this) - STEP);
 
-        if (!Settings.canDrawOverlays(this)) {
+        if (!Settings.canDrawOverlays(this) && !Sistema.enUso(this)) {
             Prefs.setOn(this, false);
             stopSelf();
             return START_NOT_STICKY;
@@ -116,9 +120,19 @@ public class DimService extends Service {
         if (running != null) running.syncOverlay();
     }
 
-    /** Si el modo accesibilidad está activo, la capa la dibuja él (cubre más); si no, esta. */
+    /**
+     * Modo sistema: no hay capa, Android oscurece la imagen por su cuenta.
+     * Si no, y el modo accesibilidad está activo, la capa la dibuja él (cubre más); si no, esta.
+     */
     private void syncOverlay() {
-        if (DimAccessibilityService.isActive()) removeOverlay(); else addOverlay();
+        if (Sistema.enUso(this)) {
+            removeOverlay();
+            Sistema.aplicar(this, true, Prefs.level(this));
+        } else {
+            if (Sistema.permitido(this)) Sistema.aplicar(this, false, Prefs.level(this));
+            if (DimAccessibilityService.isActive()) removeOverlay(); else addOverlay();
+        }
+        DimAccessibilityService.onModeChanged();
         showNotification();
     }
 
@@ -160,6 +174,7 @@ public class DimService extends Service {
     }
 
     private void applyLevel() {
+        if (Sistema.enUso(this)) { Sistema.aplicar(this, true, Prefs.level(this)); return; }
         if (overlay == null || lp == null) return;
         lp.alpha = Math.min(Prefs.level(this), Prefs.MAX_LEVEL) / 100f;
         try { wm.updateViewLayout(overlay, lp); } catch (RuntimeException ignored) { }
@@ -230,6 +245,7 @@ public class DimService extends Service {
         Prefs.get(this).unregisterOnSharedPreferenceChangeListener(listener);
         try { unregisterReceiver(screenOff); } catch (RuntimeException ignored) { }
         removeOverlay();
+        if (Sistema.permitido(this)) Sistema.aplicar(this, false, Prefs.level(this));
         if (running == this) running = null;
         updateTile();
         super.onDestroy();

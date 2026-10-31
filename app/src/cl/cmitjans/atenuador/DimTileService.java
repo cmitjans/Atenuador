@@ -21,7 +21,7 @@ public class DimTileService extends TileService {
 
     @Override
     public void onClick() {
-        if (!Settings.canDrawOverlays(this)) {
+        if (!Settings.canDrawOverlays(this) && !Sistema.enUso(this)) {
             openApp(); // falta el permiso: la app explica cómo darlo
             return;
         }

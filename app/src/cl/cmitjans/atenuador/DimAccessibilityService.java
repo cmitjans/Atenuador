@@ -27,6 +27,12 @@ public class DimAccessibilityService extends AccessibilityService {
     private WindowManager.LayoutParams lp;
 
     private final SharedPreferences.OnSharedPreferenceChangeListener listener = (p, key) -> sync();
+    private static DimAccessibilityService instance;
+
+    /** El modo sistema no usa capa: este servicio quita o vuelve a poner la suya. */
+    static void onModeChanged() {
+        if (instance != null) instance.sync();
+    }
 
     static boolean isActive() {
         return active;
@@ -37,6 +43,7 @@ public class DimAccessibilityService extends AccessibilityService {
         super.onServiceConnected();
         wm = (WindowManager) getSystemService(WINDOW_SERVICE);
         active = true;
+        instance = this;
         Prefs.get(this).registerOnSharedPreferenceChangeListener(listener);
         sync();
         DimService.onAccessibilityChanged();
@@ -44,7 +51,7 @@ public class DimAccessibilityService extends AccessibilityService {
 
     /** Muestra, ajusta o quita la capa según lo guardado en Prefs. */
     private void sync() {
-        if (!Prefs.isOn(this)) {
+        if (!Prefs.isOn(this) || Sistema.enUso(this)) {
             removeOverlay();
             return;
         }
@@ -89,6 +96,7 @@ public class DimAccessibilityService extends AccessibilityService {
     private void shutDown() {
         if (!active) return;
         active = false;
+        if (instance == this) instance = null;
         Prefs.get(this).unregisterOnSharedPreferenceChangeListener(listener);
         removeOverlay();
         DimService.onAccessibilityChanged();

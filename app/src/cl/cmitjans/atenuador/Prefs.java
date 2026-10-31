@@ -11,6 +11,7 @@ final class Prefs {
     static final String KEY_LEVEL = "level";
     static final String KEY_ON = "on";
     static final String KEY_OFF_ON_LOCK = "off_on_lock";
+    static final String KEY_SYSTEM = "system_mode";
 
     /** Android no deja que una capa normal que deja pasar los toques tape más del 80 %. */
     static final int MAX_LEVEL = 80;
@@ -36,17 +37,27 @@ final class Prefs {
         return c.getSharedPreferences(NAME, Context.MODE_PRIVATE);
     }
 
-    static int maxLevel() {
+    /** En modo sistema la escala es la de Android (0 a 100); con la capa hay límites para seguir viendo. */
+    static int maxLevel(Context c) {
+        if (Sistema.enUso(c)) return 100;
         return DimAccessibilityService.isActive() ? MAX_LEVEL_A11Y : MAX_LEVEL;
     }
 
     static int level(Context c) {
         int v = get(c).getInt(KEY_LEVEL, DEFAULT_LEVEL);
-        return Math.max(0, Math.min(maxLevel(), v));
+        return Math.max(0, Math.min(maxLevel(c), v));
     }
 
     static void setLevel(Context c, int level) {
-        get(c).edit().putInt(KEY_LEVEL, Math.max(0, Math.min(maxLevel(), level))).apply();
+        get(c).edit().putInt(KEY_LEVEL, Math.max(0, Math.min(maxLevel(c), level))).apply();
+    }
+
+    static boolean systemMode(Context c) {
+        return get(c).getBoolean(KEY_SYSTEM, false);
+    }
+
+    static void setSystemMode(Context c, boolean v) {
+        get(c).edit().putBoolean(KEY_SYSTEM, v).apply();
     }
 
     static boolean isOn(Context c) {
