@@ -53,8 +53,8 @@ public class DimAccessibilityService extends AccessibilityService {
             overlay = new View(this);
             overlay.setBackgroundColor(Color.BLACK);
             lp = new WindowManager.LayoutParams(
-                    WindowManager.LayoutParams.MATCH_PARENT,
-                    WindowManager.LayoutParams.MATCH_PARENT,
+                    Prefs.overlaySide(this),
+                    Prefs.overlaySide(this),
                     WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
                     WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
                             | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE

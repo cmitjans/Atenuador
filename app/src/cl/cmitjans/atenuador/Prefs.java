@@ -2,6 +2,8 @@ package cl.cmitjans.atenuador;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.util.DisplayMetrics;
+import android.view.WindowManager;
 
 /** Guarda la intensidad elegida y si el atenuador está encendido. */
 final class Prefs {
@@ -17,6 +19,18 @@ final class Prefs {
     static final int DEFAULT_LEVEL = 50;
 
     private Prefs() {}
+
+    /**
+     * Lado de la capa: un cuadrado del tamaño del lado más largo de la pantalla (más un margen).
+     * Así, al girar el teléfono la capa ya cubre la nueva orientación y no aparece un borde
+     * sin oscurecer mientras Android recalcula el tamaño.
+     */
+    @SuppressWarnings("deprecation")
+    static int overlaySide(Context c) {
+        DisplayMetrics dm = new DisplayMetrics();
+        ((WindowManager) c.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay().getRealMetrics(dm);
+        return Math.max(dm.widthPixels, dm.heightPixels) + 200;
+    }
 
     static SharedPreferences get(Context c) {
         return c.getSharedPreferences(NAME, Context.MODE_PRIVATE);
