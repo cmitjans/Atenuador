@@ -253,9 +253,11 @@ public class MainActivity extends Activity {
         sysToggle.setEnabled(sysOk);
         sysToggle.setChecked(sysOk && Prefs.systemMode(this));
         sysSetup.setVisibility(sysOk ? View.GONE : View.VISIBLE);
-        sysStatus.setText(!sysOk ? "Falta el permiso (ver abajo)"
+        Boolean disp = Sistema.disponible(this);
+        String dispTxt = disp == null ? "" : disp ? "✓ Tu teléfono trae esta función.\n" : "✗ Tu teléfono no trae esta función (Xiaomi la desactivó), así que este modo no tendrá efecto.\n";
+        sysStatus.setText(dispTxt + (!sysOk ? "Falta el permiso (ver abajo)"
                 : Prefs.systemMode(this) ? "✓ En uso. Si al encender el atenuador no cambia nada, tu teléfono no trae esta función: desactiva este modo."
-                : "Permiso dado. Activa el interruptor para usarlo.");
+                : "Permiso dado. Activa el interruptor para usarlo."));
         sysStatus.setTextColor(sysOk ? ACCENT : MUTED);
         toggle.setEnabled(allowed);
         toggle.setChecked(allowed && Prefs.isOn(this));

@@ -23,6 +23,20 @@ final class Sistema {
 
     private Sistema() {}
 
+    /**
+     * ¿Trae el teléfono la atenuación extra? Se lee de la configuración del sistema (no necesita permisos).
+     * Devuelve null si no se puede saber.
+     */
+    static Boolean disponible(Context c) {
+        try {
+            int id = c.getResources().getIdentifier("config_reduceBrightColorsAvailable", "bool", "android");
+            if (id == 0) return null;
+            return c.getResources().getBoolean(id);
+        } catch (RuntimeException e) {
+            return null;
+        }
+    }
+
     /** ¿Se dio el permiso desde el computador? */
     static boolean permitido(Context c) {
         return c.checkSelfPermission(Manifest.permission.WRITE_SECURE_SETTINGS) == PackageManager.PERMISSION_GRANTED;
